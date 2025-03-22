@@ -51,7 +51,36 @@ const login = async (req, res) => {
     }
 }
 
-module.exports = {
+const logoutUser = async (req, res) => {
+    try {
+        if (!req.cookies || !req.cookies.sessionId) {
+            return res.status(400).json({ message: "No active session found" });
+        }
+
+        const sessionId = req.cookies.sessionId;
+
+        // Find user by sessionId
+        const user = await User.findOne({ where: { sessionId } });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid session" });
+        }
+
+        // Clear session ID and token from the database
+        await user.update({ sessionId: null, token: null });
+
+        // Clear cookies
+        res.clearCookie("sessionId");
+
+        return res.status(200).json({ message: "Logout successful" });
+    } catch (error) {
+        console.error("Logout Error:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+module.exports = { 
     register,
-    login
+    login,
+    logoutUser
 };
