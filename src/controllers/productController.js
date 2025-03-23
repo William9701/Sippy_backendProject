@@ -1,10 +1,13 @@
 const { Product } = require("../models/product");
 const OrderItem = require("../models/orderItem");
+const User = require("../models/user");
 
 // 📌 Create a New Product
 exports.createProduct = async (req, res) => {
     // Validate request body
-    const userRole = req.user.role; // Assuming user is authenticated via middleware
+    const userid = req.user.id; // Assuming user is authenticated via middleware
+    const user = await User.findOne({ where: { id: userid } });
+    const userRole = user.role; 
     if (userRole !== "admin") {
         return res.status(403).json({ error: "Only admins can create products" });
     }
@@ -53,9 +56,11 @@ exports.getProductById = async (req, res) => {
 
 // 📌 Update Product Details
 exports.updateProduct = async (req, res) => {
-    const userRole = req.user.role; // Assuming user is authenticated via middleware
+    const userid = req.user.id; // Assuming user is authenticated via middleware
+    const user = await User.findOne({ where: { id: userid } });
+    const userRole = user.role; 
     if (userRole !== "admin") {
-        return res.status(403).json({ error: "Only admins can update products" });
+        return res.status(403).json({ error: "Only admins can create products" });
     }
     try {
         const { name, description, price, stockQuantity } = req.body;
@@ -71,9 +76,11 @@ exports.updateProduct = async (req, res) => {
 
 // 📌 Delete a Product (Only if NOT linked to an Order)
 exports.deleteProduct = async (req, res) => {
-    const userRole = req.user.role; // Assuming user is authenticated via middleware
+    const userid = req.user.id; // Assuming user is authenticated via middleware
+    const user = await User.findOne({ where: { id: userid } });
+    const userRole = user.role; 
     if (userRole !== "admin") {
-        return res.status(403).json({ error: "Only admins can delete products" });
+        return res.status(403).json({ error: "Only admins can create products" });
     }
   try {
     const productId = req.params.id;
@@ -96,9 +103,11 @@ exports.deleteProduct = async (req, res) => {
 
 // 📌 Get Low Stock Products (Stock < 5)
 exports.getLowStockProducts = async (req, res) => {
-    const userRole = req.user.role; // Assuming user is authenticated via middleware
+    const userid = req.user.id; // Assuming user is authenticated via middleware
+    const user = await User.findOne({ where: { id: userid } });
+    const userRole = user.role; 
     if (userRole !== "admin") {
-        return res.status(403).json({ error: "Only admins can access low stock products" });
+        return res.status(403).json({ error: "Only admins can create products" });
     }
     try {
       const lowStockProducts = await Product.findAll({

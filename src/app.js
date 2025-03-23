@@ -11,6 +11,7 @@ const { Server } = require("socket.io");
 const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const productRoutes = require("./routes/productRoutes");
+const setupSwagger = require("./swagger");
 require("dotenv").config();
 
 const app = express();
@@ -20,6 +21,7 @@ const io = new Server(server, {
         origin: "*", // Allow external connections if needed
     }
 });
+setupSwagger(app);
 
 // Make io accessible throughout the app
 app.set("io", io);

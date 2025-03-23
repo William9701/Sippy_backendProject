@@ -69,10 +69,13 @@ const initializePayment = async (req, res) => {
 
         // If an authorization code exists, charge the card directly
         if (authorization_code) {
-            await chargeCard(email, koboAmount, authorization_code, orderId);
+            chargeResponse = await chargeCard(email, koboAmount, authorization_code, orderId);
         }
 
-        res.json({ authorization_url: response.data.data.authorization_url });
+        res.json({
+            authorization_url: response.data.data.authorization_url,
+            charge_response: chargeResponse, // Include charge response in the response
+        });
     } catch (error) {
         console.error("🔥 Error initializing payment:", error?.response?.data || error.message || error);
         res.status(500).json({
@@ -100,7 +103,8 @@ const chargeCard = async (email, amount, authorization_code, orderId) => {
             { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` } }
         );
 
-        console.log("✅ Charge Response:", response.data);
+        console.log("✅ Charge Response:", response.data)
+        return response.data;
     } catch (error) {
         console.error("❌ Payment Error:", error?.response?.data || error.message);
     }
