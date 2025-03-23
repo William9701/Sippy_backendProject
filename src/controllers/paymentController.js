@@ -1,14 +1,15 @@
 const axios = require("axios");
 const { Order } = require("../models/order");
+const  User  = require("../models/user");
 require("dotenv").config();
 const { v4: uuidv4 } = require("uuid");
 
 // Initialize Payment
 const initializePayment = async (req, res) => {
     try {
-        const { email, amount, orderId, authorization_code } = req.body;
+        const { orderId, authorization_code } = req.body;
 
-        console.log("Received payment request:", { email, amount, orderId });
+        console.log("Received payment request:", { orderId });
 
         if (!req.user) {
             console.error("❌ Authentication error: req.user is undefined");
@@ -23,6 +24,7 @@ const initializePayment = async (req, res) => {
 
         // Find the order
         const order = await Order.findOne({ where: { id: orderUUID, userId: req.user.id } });
+        
 
         if (!order) {
             console.error("❌ Order not found for ID:", orderId);
@@ -31,8 +33,17 @@ const initializePayment = async (req, res) => {
 
         console.log("✅ Order found:", order);
 
+        const user = await User.findOne({ where: { id: order.userId } });
+        if (!user) {
+            console.error("❌ User not found for ID:", order.userId);
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const email = user.email;
+        console.log("User email:", email);
+
         // Convert amount to kobo
-        const koboAmount = amount * 100;
+        const koboAmount = order.totalAmount * 100;
         console.log("Converted amount to kobo:", koboAmount);
 
         // Paystack request payload

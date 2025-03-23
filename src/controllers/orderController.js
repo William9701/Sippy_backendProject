@@ -115,20 +115,36 @@ const getOrderById = async (req, res) => {
 // Update Order (Only if it's still pending)
 const updateOrder = async (req, res) => {
     try {
-        const { id } = req.params;
-        const userId = req.user.id;
-        const { orderType, items } = req.body;
+        const { id } = req.params; // Order ID from URL params
+        const userId = req.user.id; // Authenticated user ID
+        const { orderType, items } = req.body; // New order data
 
+        // Find order belonging to the user
         const order = await Order.findOne({ where: { id, userId } });
         if (!order) return res.status(404).json({ message: "Order not found" });
 
+        // Prevent updates if order is already processed
         if (order.status !== "pending") {
             return res.status(400).json({ message: "Only pending orders can be updated" });
         }
 
+        // Calculate total amount
         const totalAmount = items.reduce((acc, item) => acc + item.quantity * item.price, 0);
 
+        // Update order details
         await order.update({ orderType, items, totalAmount });
+
+        // Get WebSocket instance
+        const io = req.app.get("io");
+
+        // Broadcast order update to all connected clients tracking this order
+        io.to(id).emit("orderUpdate", {
+            orderId: id,
+            status: order.status,
+            orderType,
+            items,
+            totalAmount
+        });
 
         return res.status(200).json({ message: "Order updated successfully", order });
 

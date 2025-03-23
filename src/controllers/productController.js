@@ -3,14 +3,19 @@ const OrderItem = require("../models/orderItem");
 
 // 📌 Create a New Product
 exports.createProduct = async (req, res) => {
-  try {
-    const { name, description, price, stockQuantity } = req.body;
-    const product = await Product.create({ name, description, price, stockQuantity });
+    // Validate request body
+    const userRole = req.user.role; // Assuming user is authenticated via middleware
+    if (userRole !== "admin") {
+        return res.status(403).json({ error: "Only admins can create products" });
+    }
+    try {
+        const { name, description, price, stockQuantity } = req.body;
+        const product = await Product.create({ name, description, price, stockQuantity });
 
-    return res.status(201).json({ message: "Product created successfully", product });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
+        return res.status(201).json({ message: "Product created successfully", product });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
 };
 
 // 📌 Get All Products (with Pagination & Filtering)
@@ -48,20 +53,28 @@ exports.getProductById = async (req, res) => {
 
 // 📌 Update Product Details
 exports.updateProduct = async (req, res) => {
-  try {
-    const { name, description, price, stockQuantity } = req.body;
-    const product = await Product.findByPk(req.params.id);
-    if (!product) return res.status(404).json({ error: "Product not found" });
+    const userRole = req.user.role; // Assuming user is authenticated via middleware
+    if (userRole !== "admin") {
+        return res.status(403).json({ error: "Only admins can update products" });
+    }
+    try {
+        const { name, description, price, stockQuantity } = req.body;
+        const product = await Product.findByPk(req.params.id);
+        if (!product) return res.status(404).json({ error: "Product not found" });
 
-    await product.update({ name, description, price, stockQuantity });
-    return res.json({ message: "Product updated successfully", product });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
+        await product.update({ name, description, price, stockQuantity });
+        return res.json({ message: "Product updated successfully", product });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
 };
 
 // 📌 Delete a Product (Only if NOT linked to an Order)
 exports.deleteProduct = async (req, res) => {
+    const userRole = req.user.role; // Assuming user is authenticated via middleware
+    if (userRole !== "admin") {
+        return res.status(403).json({ error: "Only admins can delete products" });
+    }
   try {
     const productId = req.params.id;
 
@@ -83,6 +96,10 @@ exports.deleteProduct = async (req, res) => {
 
 // 📌 Get Low Stock Products (Stock < 5)
 exports.getLowStockProducts = async (req, res) => {
+    const userRole = req.user.role; // Assuming user is authenticated via middleware
+    if (userRole !== "admin") {
+        return res.status(403).json({ error: "Only admins can access low stock products" });
+    }
     try {
       const lowStockProducts = await Product.findAll({
         where: {
