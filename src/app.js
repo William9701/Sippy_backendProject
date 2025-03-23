@@ -8,6 +8,7 @@ const userRoutes = require("./routes/userRoutes")
 const cookieParser = require("cookie-parser");
 const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const productRoutes = require("./routes/productRoutes");
 require("dotenv").config();
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRouters);
 app.use("/api/user", userRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/products", productRoutes);
 app.use("/api", orderRoutes);
 
 

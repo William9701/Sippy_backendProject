@@ -132,7 +132,7 @@ const verifyPayment = async (req, res) => {
             return res.status(404).json({ message: "Order not found" });
         }
 
-        order.status = "completed";
+        order.status = "confirmed";
         await order.save();
 
         console.log("✅ Order marked as paid:", order.id);

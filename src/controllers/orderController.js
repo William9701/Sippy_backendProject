@@ -1,4 +1,6 @@
 const { Order } = require("../models/order");
+const { Product } = require("../models/product");
+const sequelize = require("../config/database");
 const  User  = require("../models/user");
 const Joi = require("joi");
 
@@ -7,15 +9,17 @@ const orderSchema = Joi.object({
     orderType: Joi.string().valid("single", "group").required(),
     items: Joi.array().items(
         Joi.object({
-            name: Joi.string().required(),
+            productId: Joi.string().uuid().required(),
+            name: Joi.string().optional(),
             quantity: Joi.number().min(1).required(),
-            price: Joi.number().min(0).required(),
         })
     ).required(),
 });
 
 // Create Order
 const createOrder = async (req, res) => {
+    const transaction = await sequelize.transaction(); // Start transaction
+
     try {
         const { error } = orderSchema.validate(req.body);
         if (error) return res.status(400).json({ message: error.details[0].message });
@@ -23,14 +27,55 @@ const createOrder = async (req, res) => {
         const { orderType, items } = req.body;
         const userId = req.user.id; // Assuming user is authenticated via middleware
 
-        // Calculate total amount
-        const totalAmount = items.reduce((acc, item) => acc + item.quantity * item.price, 0);
+        let totalAmount = 0;
+        let processedItems = [];
 
-        const order = await Order.create({ userId, orderType, items, totalAmount });
+        // Check stock availability and get product price
+        for (const item of items) {
+            const product = await Product.findByPk(item.productId, { transaction });
+
+            if (!product) {
+                await transaction.rollback();
+                return res.status(404).json({ message: `Product with ID ${item.productId} not found` });
+            }
+
+            if (product.stockQuantity < item.quantity) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    message: `Insufficient stock for ${product.name}. Available: ${product.stockQuantity}, Requested: ${item.quantity}`
+                });
+            }
+
+            const itemPrice = product.price;
+            totalAmount += item.quantity * itemPrice;
+
+            processedItems.push({
+                productId: item.productId,
+                quantity: item.quantity,
+                price: itemPrice
+            });
+        }
+
+        // Create order
+        const order = await Order.create(
+            { userId, orderType, items: processedItems, totalAmount },
+            { transaction }
+        );
+
+        // Reduce stock levels
+        for (const item of processedItems) {
+            const product = await Product.findByPk(item.productId, { transaction });
+
+            product.stockQuantity -= item.quantity;
+            await product.save({ transaction });
+        }
+
+        await transaction.commit(); // Commit transaction
 
         return res.status(201).json({ message: "Order placed successfully", order });
 
     } catch (error) {
+        await transaction.rollback(); // Rollback transaction on error
         console.error("Order Creation Error:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
