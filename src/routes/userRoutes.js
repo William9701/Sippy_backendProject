@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { authenticateUser } = require("../middlewares/authMiddleware");
-const { profile } = require("../controllers/userController");
+const { profile, me } = require("../controllers/userController");
 
 /**
  * @swagger
@@ -22,7 +22,7 @@ const { profile } = require("../controllers/userController");
 
 /**
  * @swagger
- * /users/profile:
+ * /user/me:
  *   get:
  *     summary: Get user profile
  *     tags: [Users]
@@ -34,6 +34,6 @@ const { profile } = require("../controllers/userController");
  *       401:
  *         description: Unauthorized - User must be logged in
  */
-router.get("/profile", authenticateUser, profile);
+router.get("/me", authenticateUser, me);
 
 module.exports = router;
