@@ -216,8 +216,8 @@ If you'd like to contribute, feel free to fork the repo and submit a PR.
 
 ## 📬 Contact
 - **Developer**: Obi Obiesie William
-- **Email**: obi.william@example.com
-- **LinkedIn**: [linkedin.com/in/obiobiesie](#)
+- **Email**: williamobi818@gmail.com
+- **LinkedIn**: [https://www.linkedin.com/in/obi-william-29a2a2182/](#)
 
 ---
 
